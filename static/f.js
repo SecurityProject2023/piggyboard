@@ -1,0 +1,1 @@
+document.addEventListener("DOMContentLoaded",function(){document.querySelector("form");let e=document.querySelectorAll('input'),n=document.querySelector(".invalid-feedback");setTimeout(function(){let t=setInterval(function(){n.style.obacity=1,clearInterval(t),n.style.display="none",e.forEach(function(a, b) {a.classList.remove("is-invalid")})},50)},5e3)});
