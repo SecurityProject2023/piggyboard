@@ -3,7 +3,6 @@ use actix_identity::Identity;
 use actix_web::{web::{self, Data, Form}, get, post, HttpResponse, Responder};
 use diesel::{r2d2::{PooledConnection, self}, SqliteConnection};
 use piggyboard::{models::{User, Article, Like, Dislike}, DbPool, cryp::md5};
-use serde_json::json;
 use tera::{Tera, Context};
 use serde::Deserialize;
 
@@ -65,28 +64,6 @@ async fn garticle(pool: Data<DbPool>, token: CsrfToken, user: Option<Identity>, 
   HttpResponse::Ok().body(result)
 }
 
-#[post("/api/v1/rate/{id}")]
-async fn prate_article(pool: Data<DbPool>, user: Option<Identity>, ath: web::Path<(u32,)>, payload: web::Json<ArticleRateData>) -> impl Responder {
-  let mut conn: PooledConnection<r2d2::ConnectionManager<SqliteConnection>> = pool.get().unwrap();
-  if let None = user { return HttpResponse::Unauthorized().finish(); }
-  let user = User::by_username(&mut conn, &user.unwrap().id().unwrap());
-  if let Err(_) = user { return HttpResponse::Unauthorized().finish(); }
-  let user = user.unwrap();
-  let arti = Article::by_id(&mut conn, ath.into_inner().0 as i32);
-  if let Err(_) = arti { return HttpResponse::NotFound().finish(); }
-  let arti: Article = arti.unwrap();
-  let payload = payload.into_inner();
-  if user.id != payload.user_id { return HttpResponse::Unauthorized().finish(); }
-  if payload.value == 1 {
-    if let Ok(true) = Like::liked(&mut conn, user.id, arti.id) { return HttpResponse::Ok().json(json!({ "error": true, "message": "You Already Liked This" })) }
-    Like::add(&mut conn, Like::new(payload.user_id, arti.id)).unwrap();
-  } else if payload.value == -1 {
-    if let Ok(true) = Dislike::disliked(&mut conn, user.id, arti.id) { return HttpResponse::Ok().json(json!({ "error": true, "message": "You Already Disliked This" })) }
-    Dislike::add(&mut conn, Dislike::new(payload.user_id, arti.id)).unwrap();
-  } else { return HttpResponse::BadRequest().finish(); }
-  HttpResponse::Ok().json(json!({ "error": false, "message": "Success" }))
-}
-
 #[get("/moonrin")]
 async fn moonrin() -> impl Responder { HttpResponse::InternalServerError().finish() }
 
@@ -99,18 +76,10 @@ pub struct ArticleWriteData {
 
 impl CsrfGuarded for ArticleWriteData { fn csrf_token(&self) -> &CsrfToken { &self.csrf_token } }
 
-#[derive(Deserialize)]
-pub struct ArticleRateData {
-  pub value: i32,
-  pub user_id: i32,
-  pub csrf_token: String
-}
-
 pub fn services(cfg: &mut web::ServiceConfig) {
   cfg.service(index);
   cfg.service(moonrin);
   cfg.service(garticle);
   cfg.service(gwrite);
   cfg.service(pwrite);
-  cfg.service(prate_article);
 }

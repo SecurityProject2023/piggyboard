@@ -1,9 +1,7 @@
 use actix_web::web::ServiceConfig;
 
-pub mod meta;
-pub mod auth;
+pub mod rate;
 
 pub fn services(cfg: &mut ServiceConfig) {
-  meta::services(cfg);
-  auth::services(cfg)
+  rate::services(cfg);
 }

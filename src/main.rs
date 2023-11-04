@@ -17,6 +17,7 @@ use actix_csrf::CsrfMiddleware;
 use rand::rngs::StdRng;
 
 mod board;
+mod api;
 
 fn handle_error<B>(mut res: ServiceResponse<B>, error_file: &str) -> ActixResult<ErrorHandlerResponse<B>> {
   res.response_mut().headers_mut().insert(header::CONTENT_TYPE, header::HeaderValue::from_static("text/html; charset=utf-8"));
@@ -70,7 +71,7 @@ async fn main() -> IOResult<()> {
       }))
       .configure(board::v1::services)
       .service(Files::new("/", "static/"))
-      // .service(web::scope("/v1").configure(api::v1::services))
+      .service(web::scope("/v1").configure(api::v1::services))
   })
   .bind(("127.0.0.1", 23519))?
   .run()
