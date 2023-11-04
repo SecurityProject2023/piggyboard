@@ -118,18 +118,14 @@
         </tr>
       </thead>
       <tbody>
+        {% for data in articles %}
         <tr>
-          <th scope="row">1</th>
-          <td><a href="#">rickroot30은 바보입니다.</a></td>
-          <td>작성자1</td>
-          <td>2023-10-26</td>
+          <th scope="row">{{ data.1.id }}</th>
+          <td><a href="/article/{{ data.1.id }}">{{ data.1.title }}</a></td>
+          <td>{{ authors[data.0].username }}</td>
+          <td><time id="time" datetime="{{ data.1.created_at }}"></time></td>
         </tr>
-        <tr>
-          <th scope="row">2</th>
-          <td><a href="#">Java는 쓸데없는 언어입니다.</a></td>
-          <td>작성자2</td>
-          <td>2023-10-27</td>
-        </tr>
+        {% endfor %}
       </tbody>
     </table>
     <nav aria-label="페이지 네비게이션">
@@ -150,5 +146,6 @@
       </ul>
     </nav>
   </div>
+  <script src="/t.js"></script>
 </body>
 </html>

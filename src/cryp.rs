@@ -2,7 +2,7 @@ use argon2::{
   password_hash::{rand_core::OsRng, PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
   Argon2
 };
-
+use md5::{Md5, Digest};
 use crate::{PiggyResult, error::PiggyError};
 
 pub fn password_hash(password: &str) -> PiggyResult<String>{
@@ -22,4 +22,11 @@ pub fn verify_password(hash: &str, password: &str) -> PiggyResult<bool> {
     Err(e) => return Err(PiggyError::new(e.to_string(), crate::error::PiggyErrorKind::PasswordHashCreateFailed)),
   };
   Ok(Argon2::default().verify_password(password, &parsed_hash).is_ok())
+}
+
+pub fn md5(input: &impl ToString) -> String {
+  let mut hasher = Md5::new();
+  hasher.update(input.to_string());
+  let result = hasher.finalize();
+  format!("{:x}", result)
 }

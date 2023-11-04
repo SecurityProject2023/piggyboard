@@ -156,11 +156,12 @@
           {% endif %}
         </div>
         <div class="mb-3">
-          <a href="/whatthefuck">이메일을 잊으셨나요?</a>
+          <a href="/signin/v2/usernamerecovery">이메일을 잊으셨나요?</a>
         </div>
         <div class="mb-3">
           <p style="font-size: 12px; color: #888;">내 컴퓨터가 아닌가요? 게스트 모드를 사용하여 비공개로 로그인하세요. <a href="https://support.google.com/chrome/answer/6130773?hl=ru" target="_blank" rel="noopener noreferrer">자세히 알아보기</a></p>
         </div>
+        <input type="hidden" name="csrf_token" value="{{csrf_token}}" />
         <button
           type="submit"
           class="btn btn-primary"

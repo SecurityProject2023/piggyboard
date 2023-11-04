@@ -1,3 +1,4 @@
+use actix_csrf::extractor::{CsrfToken, CsrfGuarded};
 use actix_session::Session;
 use actix_web::{
   web::{self, Form, Data}, get, post, HttpResponse, Responder
@@ -15,8 +16,10 @@ async fn gunknownerror(tera: web::Data<Tera>) -> impl Responder { HttpResponse::
 async fn gsignup() -> impl Responder { HttpResponse::Found().append_header(("Location", "/signup/v2/createaccount")).finish() }
 
 #[get("/signup/v2/createaccount")]
-async fn gsignup_v2_createaccount(tera: web::Data<Tera>) -> impl Responder {
-  let result = tera.render("createaccount.html", &tera::Context::new()).unwrap();
+async fn gsignup_v2_createaccount(token: CsrfToken, tera: web::Data<Tera>) -> impl Responder {
+  let mut ctx = tera::Context::new();
+  ctx.insert("csrf_token", &token.get());
+  let result = tera.render("createaccount.html", &ctx).unwrap();
   HttpResponse::Ok().body(result)
 }
 
@@ -24,6 +27,7 @@ async fn gsignup_v2_createaccount(tera: web::Data<Tera>) -> impl Responder {
 async fn psignup_v2_createaccount(session: Session, tera: web::Data<Tera>, cadata: Form<CreateAccount>) -> impl Responder {
   let account = cadata.into_inner();
   let mut ctx = tera::Context::new();
+  ctx.insert("csrf_token", &account.csrf_token.get());
   if account.firstname == "" {
     ctx.insert("ferr", "이름을 정확하게 입력하셨나요?");
   } else {
@@ -36,9 +40,10 @@ async fn psignup_v2_createaccount(session: Session, tera: web::Data<Tera>, cadat
 }
 
 #[get("/signup/v2/birthdaygender")]
-async fn gsignup_v2_birthdaygender(session: Session, tera: web::Data<Tera>) -> impl Responder {
+async fn gsignup_v2_birthdaygender(token: CsrfToken, session: Session, tera: web::Data<Tera>) -> impl Responder {
   if session.get::<String>("firstname").unwrap() == None { return HttpResponse::Found().append_header(("Location", "/signup/v2/createaccount")).finish(); }
-  let ctx = tera::Context::new();
+  let mut ctx = tera::Context::new();
+  ctx.insert("csrf_token", &token.get());
   let result = tera.render("birthdaygender.html", &ctx).unwrap();
   HttpResponse::Ok().body(result)
 }
@@ -49,6 +54,7 @@ async fn psignup_v2_birthdaygender(session: Session, tera: web::Data<Tera>, bgda
   let birgen = bgdata.into_inner();
   let birth = parse_date(&birgen.birth);
   let mut ctx = tera::Context::new();
+  ctx.insert("csrf_token", &birgen.csrf_token.get());
   if birth.is_err() {
     ctx.insert("berr", "생년월일을 정확하게 입력하셨나요?");
   } else if birth.unwrap() < NaiveDate::from_ymd_opt(1923, 1, 1).unwrap() {
@@ -63,10 +69,11 @@ async fn psignup_v2_birthdaygender(session: Session, tera: web::Data<Tera>, bgda
 }
 
 #[get("/signup/v2/createusername")]
-async fn gsignup_v2_createusername(session: Session, tera: web::Data<Tera>) -> impl Responder {
+async fn gsignup_v2_createusername(token: CsrfToken, session: Session, tera: web::Data<Tera>) -> impl Responder {
   if session.get::<String>("firstname").unwrap() == None { return HttpResponse::Found().append_header(("Location", "/signup/v2/createaccount")).finish(); }
   if session.get::<NaiveDate>("birth").unwrap() == None || session.get::<String>("gender").unwrap() == None { return HttpResponse::Found().append_header(("Location", "/signup/v2/birthdaygender")).finish(); }
-  let ctx = tera::Context::new();
+  let mut ctx = tera::Context::new();
+  ctx.insert("csrf_token", &token.get());
   let result = tera.render("createusername.html", &ctx).unwrap();
   HttpResponse::Ok().body(result)
 }
@@ -76,8 +83,10 @@ async fn psignup_v2_createusername(pool: Data<DbPool>, session: Session, tera: w
   let mut conn: PooledConnection<r2d2::ConnectionManager<SqliteConnection>> = pool.get().unwrap();
   if session.get::<String>("firstname").unwrap() == None { return HttpResponse::Found().append_header(("Location", "/signup/v2/createaccount")).finish(); }
   if session.get::<NaiveDate>("birth").unwrap() == None || session.get::<String>("gender").unwrap() == None { return HttpResponse::Found().append_header(("Location", "/signup/v2/birthdaygender")).finish(); }
-  let username = bgdata.into_inner().userid;
+  let d = bgdata.into_inner();
+  let username = d.userid;
   let mut ctx = tera::Context::new();
+  ctx.insert("csrf_token", &d.csrf_token.get());
   let disallowed: Vec<String> = vec!["admin", "administrator", "moderator", "mod", "piggyboard", "piggy", "board", "administ", "administra", "admin"].iter().map(|s| s.to_string()).collect();
   match User::by_username(&mut conn, &username) {
     Ok(_) => {ctx.insert("uerr", "이미 사용된 사용자 이름입니다. 다른 이름을 선택하세요.");},
@@ -94,11 +103,12 @@ async fn psignup_v2_createusername(pool: Data<DbPool>, session: Session, tera: w
 }
 
 #[get("/signup/v2/createpassword")]
-async fn gsignup_v2_createpassword(session: Session, tera: web::Data<Tera>) -> impl Responder {
+async fn gsignup_v2_createpassword(token: CsrfToken, session: Session, tera: web::Data<Tera>) -> impl Responder {
   if session.get::<String>("firstname").unwrap() == None { return HttpResponse::Found().append_header(("Location", "/signup/v2/createaccount")).finish(); }
   if session.get::<NaiveDate>("birth").unwrap() == None || session.get::<String>("gender").unwrap() == None { return HttpResponse::Found().append_header(("Location", "/signup/v2/birthdaygender")).finish(); }
   if session.get::<String>("username").unwrap() == None { return HttpResponse::Found().append_header(("Location", "/signup/v2/createusername")).finish(); }
-  let ctx = tera::Context::new();
+  let mut ctx = tera::Context::new();
+  ctx.insert("csrf_token", &token.get());
   let result = tera.render("createpassword.html", &ctx).unwrap();
   HttpResponse::Ok().body(result)
 }
@@ -110,6 +120,7 @@ async fn psignup_v2_createpassword(session: Session, tera: web::Data<Tera>, pwda
   if session.get::<String>("username").unwrap() == None { return HttpResponse::Found().append_header(("Location", "/signup/v2/createusername")).finish(); }
   let pw = pwdata.into_inner();
   let mut ctx = tera::Context::new();
+  ctx.insert("csrf_token", &pw.csrf_token.get());
   if pw.password == pw.pwcheck {
     session.insert("password", pw.password).unwrap();
     return HttpResponse::Found().append_header(("Location", "/signup/v2/complete")).finish();
@@ -145,28 +156,44 @@ async fn gsignup_v2_complete(pool: Data<DbPool>, session: Session) -> impl Respo
   return HttpResponse::Found().append_header(("Location", "/")).finish()
 }
 
+#[get("/signin/v2/usernamerecovery")]
+async fn gsignup_v2_usernamerecovery(tera: web::Data<Tera>) -> impl Responder {
+  let mut ctx = tera::Context::new();
+  ctx.insert("err", "\"이메일 찾기\" 기능은 현재 버전에서 지원되지 않습니다. 추후 지원 계획에 대해서는 Int2Fme 페이지를 참고하세요");
+  HttpResponse::Ok().body(tera.render("error.html", &ctx).unwrap())
+}
+
 #[derive(Deserialize)]
 pub struct CreateAccount {
   pub lastname: Option<String>,
   pub firstname: String,
+  csrf_token: CsrfToken,
 }
 
 #[derive(Deserialize)]
 pub struct BirthdayGender {
   pub birth: String,
   pub gender: String,
+  csrf_token: CsrfToken,
 }
 
 #[derive(Deserialize)]
 pub struct CreateUsername {
   pub userid: String,
+  csrf_token: CsrfToken,
 }
 
 #[derive(Deserialize)]
 pub struct CreatePassword {
   pub password: String,
-  pub pwcheck: String
+  pub pwcheck: String,
+  csrf_token: CsrfToken,
 }
+
+impl CsrfGuarded for CreateAccount { fn csrf_token(&self) -> &CsrfToken { &self.csrf_token } }
+impl CsrfGuarded for BirthdayGender { fn csrf_token(&self) -> &CsrfToken { &self.csrf_token } }
+impl CsrfGuarded for CreateUsername { fn csrf_token(&self) -> &CsrfToken { &self.csrf_token } }
+impl CsrfGuarded for CreatePassword { fn csrf_token(&self) -> &CsrfToken { &self.csrf_token } }
 
 pub fn services(cfg: &mut web::ServiceConfig) {
   cfg.service(gunknownerror);
@@ -180,6 +207,7 @@ pub fn services(cfg: &mut web::ServiceConfig) {
   cfg.service(gsignup_v2_createpassword);
   cfg.service(psignup_v2_createpassword);
   cfg.service(gsignup_v2_complete);
+  cfg.service(gsignup_v2_usernamerecovery);
 }
 
 fn parse_date(date_str: &str) -> Result<NaiveDate, chrono::ParseError> {

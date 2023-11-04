@@ -1,0 +1,1 @@
+for(var a=document.getElementsByTagName("time"),b=0;b<a.length;b++){var c=new Date(a[b].getAttribute("datetime"));a[b].textContent=c.getFullYear()+"-"+("0"+(c.getMonth()+1)).slice(-2)+"-"+("0"+c.getDate()).slice(-2)+" "+("0"+c.getHours()).slice(-2)+":"+("0"+c.getMinutes()).slice(-2)+":"+("0"+c.getSeconds()).slice(-2)};

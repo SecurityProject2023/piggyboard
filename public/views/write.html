@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>게시글 등록 | 선린정보보안프로젝트</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    .card {
+      box-shadow: 0 0.5rem 1rem 0 rgba(0, 0, 0, 0.1);
+    }
+    .btn-primary {
+      background-color: #007bff;
+      border-color: #007bff;
+    }
+    .footer {
+      position: fixed;
+      left: 0;
+      bottom: 0;
+      width: 100%;
+      text-align: center;
+      padding: 20px;
+      background-color: white;
+      border-top: 1px solid white;
+    }
+  </style>
+</head>
+<body>
+  <div class="container py-5">
+    <div class="card w-75 mx-auto">
+      <div class="card-body">
+        <h2 class="card-title mb-4">게시글 등록</h2>
+        <form method="post" action="/write">
+          <div class="mb-3">
+            <label for="title" class="form-label">제목</label>
+            <input type="text" class="form-control" id="title" name="title" placeholder="제목을 입력하세요">
+          </div>
+          <div class="mb-3">
+            <label for="content" class="form-label">내용</label>
+            <textarea class="form-control" id="content" name="content" rows="5" placeholder="내용을 입력하세요. 운영약관에 위반되는 모든 게시글은 무통보 삭제됩니다."></textarea>
+          </div>
+          <input type="hidden" name="csrf_token" value="{{csrf_token}}" />
+          <button type="submit" class="btn btn-primary">등록</button>
+        </form>
+      </div>
+    </div>
+  </div>
+  <footer class="footer">
+    <div class="container">
+      <span class="text-muted">© 2023 선린정보보안프로젝트, All rights reserved.</span>
+      <div>
+        <a href="/privacy" target="_blank">개인정보처리방침</a> |
+        <a href="/terms" target="_blank">이용약관</a>
+      </div>
+    </div>
+  </footer>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

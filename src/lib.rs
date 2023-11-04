@@ -14,6 +14,11 @@ pub type DieselResult<T> = Result<T, diesel::result::Error>;
 pub type PiggyResult<T> = Result<T, error::PiggyError>;
 pub type DbPool = r2d2::Pool<r2d2::ConnectionManager<SqliteConnection>>;
 
+#[cfg(debug_assertions)]
+pub static ROOT_HOST: &'static str = "127.0.0.1";
+#[cfg(not(debug_assertions))]
+pub static ROOT_HOST: &'static str = "sunrin2023.urdekcah.me";
+
 pub fn establish_connection() -> SqliteConnection {
   let database_url: String = String::from("sqlite:///C:/rust/piggyboard/piggyboard.sqlite3");
   SqliteConnection::establish(&database_url)
