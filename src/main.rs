@@ -70,8 +70,9 @@ async fn main() -> IOResult<()> {
         PiggyError::from_kind(PiggyErrorKind::MimeUnknown).into()
       }))
       .configure(board::v1::services)
+      .configure(api::v1::services)
       .service(Files::new("/", "static/"))
-      .service(web::scope("/v1").configure(api::v1::services))
+      // .service(web::scope("/v1").configure(api::v1::services))
   })
   .bind(("127.0.0.1", 23519))?
   .run()
