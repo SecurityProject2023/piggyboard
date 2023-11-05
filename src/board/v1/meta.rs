@@ -39,6 +39,29 @@ async fn gupdates(pool: Data<DbPool>, user: Option<Identity>, tera: web::Data<Te
   HttpResponse::Ok().body(result)
 }
 
+#[get("/u/@{username}")]
+async fn guser(pool: Data<DbPool>, user: Option<Identity>, tera: web::Data<Tera>, username: web::Path<(String,)>) -> impl Responder {
+  let mut conn: PooledConnection<r2d2::ConnectionManager<SqliteConnection>> = pool.get().unwrap();
+  let mut ctx = Context::new();
+  match User::by_username(&mut conn, &username.into_inner().0) {
+    Ok(r) => {
+      ctx.insert("user", &r);
+      ctx.insert("amd5", &md5(&r.email));
+      ctx.insert("articles", &Article::by_author_id(&mut conn, r.id).unwrap());
+      ctx.insert("comments", &Comment::by_author_id(&mut conn, r.id).unwrap());
+    },
+    Err(_) => return HttpResponse::NotFound().finish(),
+  };
+  if let Some(user) = user {
+    if let Ok(user) = User::by_username(&mut conn, &user.id().unwrap()) {
+      ctx.insert("login", &user);
+      ctx.insert("lamd5", &md5(&user.email));
+    }
+  }
+  let result = tera.render("users.html", &ctx).unwrap();
+  HttpResponse::Ok().body(result)
+}
+
 #[get("/write")]
 async fn gwrite(pool: Data<DbPool>, token: CsrfToken, user: Option<Identity>, tera: web::Data<Tera>) -> impl Responder {
   if let None = user { return HttpResponse::Unauthorized().finish(); }
@@ -135,4 +158,5 @@ pub fn services(cfg: &mut web::ServiceConfig) {
   cfg.service(pwrite);
   cfg.service(gupdates);
   cfg.service(pcomment);
+  cfg.service(guser);
 }

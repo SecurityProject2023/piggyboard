@@ -74,6 +74,13 @@ impl Comment {
     }
     Ok(authors)
   }
+
+  pub fn by_author_id(conn: &mut SqliteConnection, author_id: i32) -> PiggyResult<Vec<Comment>> {
+    match comments::table.filter(comments::author_id.eq(author_id)).load::<Comment>(conn) {
+      Ok(comments) => Ok(comments),
+      Err(_) => Err(PiggyError::from_kind(PiggyErrorKind::CommentNotFound)),
+    }
+  }
  
   pub fn delete(&self, conn: &mut SqliteConnection) -> PiggyResult<()> {
     diesel::delete(comments::table.find(self.id)).execute(conn)?;

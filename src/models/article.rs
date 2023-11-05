@@ -74,6 +74,12 @@ impl Article {
     }
   }
 
+  pub fn by_author_id(conn: &mut SqliteConnection, author_id: i32) -> PiggyResult<Vec<Article>> {
+    match articles::table.filter(articles::author_id.eq(author_id)).load::<Article>(conn) {
+      Ok(posts) => Ok(posts),
+      Err(_) => Err(PiggyError::from_kind(PiggyErrorKind::PostNotFound)),
+    }
+  }
   
   pub fn delete(&self, conn: &mut SqliteConnection) -> PiggyResult<()> {
     diesel::delete(articles::table.find(self.id)).execute(conn)?;
