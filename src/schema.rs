@@ -12,8 +12,9 @@ diesel::table! {
 
 diesel::table! {
     comments (id) {
-        id -> Nullable<Integer>,
+        id -> Integer,
         author_id -> Integer,
+        article_id -> Integer,
         content -> Text,
         created_at -> Timestamp,
     }
@@ -67,6 +68,7 @@ diesel::table! {
 }
 
 diesel::joinable!(articles -> users (author_id));
+diesel::joinable!(comments -> articles (article_id));
 diesel::joinable!(comments -> users (author_id));
 diesel::joinable!(dislike -> articles (article_id));
 diesel::joinable!(dislike -> users (user_id));

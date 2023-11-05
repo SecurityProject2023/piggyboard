@@ -32,6 +32,7 @@ pub enum PiggyErrorKind {
   EmailAddressError,
   SmtpTransportError,
   UnknownEmailContentType,
+  CommentNotFound
 }
 
 impl ToString for PiggyErrorKind {
@@ -69,6 +70,7 @@ impl ToString for PiggyErrorKind {
       PiggyErrorKind::EmailAddressError => "EMAIL_ADDRESS_ERROR".to_string(),
       PiggyErrorKind::SmtpTransportError => "SMTP_TRANSPORT_ERROR".to_string(),
       PiggyErrorKind::UnknownEmailContentType => "UNKNOWN_EMAIL_CONTENT_TYPE".to_string(),
+      PiggyErrorKind::CommentNotFound => "COMMENT_NOT_FOUND".to_string()
     }
   }
 }

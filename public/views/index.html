@@ -100,11 +100,16 @@
   </div>
   <div class="header-nav">
     <ul class="nav-links">
-      <li><a href="#">PiggyBoard</a></li>
+      <li><a href="/">PiggyBoard</a></li>
       <li><a href="#">Fishydino for Korea</a></li>
-      <li><a href="#">제품</a></li>
-      <li><a href="#">약속</a></li>
-      <li><a href="#">스토리</a></li>
+      <li><a href="/updates">최근 업데이트</a></li>
+      {% if user %}
+        <li><a href="/write">글 작성하기</a></li>
+        <li><a href="/logout">로그아웃</a></li>
+      {% else %}
+        <li><a href="/signup">계정 만들기</a></li>
+        <li><a href="/login">로그인</a></li>
+      {% endif %}
     </ul>
   </div>
   <div class="container">

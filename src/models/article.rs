@@ -1,9 +1,11 @@
+use std::collections::HashMap;
+
 use diesel::prelude::*;
 use crate::{schema::articles, PiggyResult, error::{PiggyError, PiggyErrorKind}};
 use chrono::{NaiveDateTime, Utc};
 use serde::Serialize;
 
-use super::User;
+use super::{User, Comment};
 
 #[derive(Queryable, Debug, PartialEq, Serialize)]
 #[diesel(table_name = article)]
@@ -57,6 +59,21 @@ impl Article {
   }
 
   pub fn get_all(conn: &mut SqliteConnection) -> PiggyResult<Vec<Article>> { Ok(articles::table.load::<Article>(conn)?) }
+
+  pub fn get_all_comments(&self, conn: &mut SqliteConnection) -> PiggyResult<Vec<Comment>> {
+    match Comment::get_all(conn, self.id) {
+      Ok(comments) => Ok(comments),
+      Err(_) => Err(PiggyError::from_kind(PiggyErrorKind::CommentNotFound)),
+    }
+  }
+
+  pub fn get_all_comment_authors(&self, conn: &mut SqliteConnection) -> PiggyResult<HashMap<i32, User>> {
+    match Comment::get_all_authors(conn, self.id) {
+      Ok(authors) => Ok(authors),
+      Err(_) => Err(PiggyError::from_kind(PiggyErrorKind::CommentNotFound)),
+    }
+  }
+
   
   pub fn delete(&self, conn: &mut SqliteConnection) -> PiggyResult<()> {
     diesel::delete(articles::table.find(self.id)).execute(conn)?;

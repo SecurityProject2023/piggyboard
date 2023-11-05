@@ -45,6 +45,7 @@ async fn main() -> IOResult<()> {
   HttpServer::new(move || {
     let csrf = CsrfMiddleware::<StdRng>::new()
       .set_cookie(Method::GET, "/login")
+      .set_cookie(Method::GET, "/write")
       .set_cookie(Method::GET, "/article/{id}")
       .set_cookie(Method::GET, "/signup/v2/createaccount")
       .set_cookie(Method::GET, "/signup/v2/birthdaygender")

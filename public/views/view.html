@@ -200,7 +200,7 @@
     }
     .alert {
       width: 100%;
-      margin-bottom: 20px;
+      margin-bottom: 0px;
     }
   </style>
 </head>
@@ -210,11 +210,16 @@
   </div>
   <div class="header-nav">
     <ul class="nav-links">
-      <li><a href="#">PiggyBoard</a></li>
+      <li><a href="/">PiggyBoard</a></li>
       <li><a href="#">Fishydino for Korea</a></li>
-      <li><a href="#">제품</a></li>
-      <li><a href="#">약속</a></li>
-      <li><a href="#">스토리</a></li>
+      <li><a href="/updates">최근 업데이트</a></li>
+      {% if user %}
+        <li><a href="/write">글 작성하기</a></li>
+        <li><a href="/logout">로그아웃</a></li>
+      {% else %}
+        <li><a href="/signup">계정 만들기</a></li>
+        <li><a href="/login">로그인</a></li>
+      {% endif %}
     </ul>
   </div>
   <div class="container">
@@ -245,7 +250,7 @@
           <span class="body" style="color: #BF3131;">{{dislikes|length}}</span>
           <span class="sep"></span>
           <span class="head">댓글</span>
-          <span class="body">0</span>
+          <span class="body">{{comments|length}}</span>
           <span class="sep"></span>
           <span class="head">조회수</span>
           <span class="body">0</span>
@@ -274,8 +279,11 @@
       <hr>
       <div class="comment-input">
       {% if user %}
-        <textarea placeholder="댓글을 입력하세요"></textarea>
-        <button class="btn btn-primary">댓글 등록</button>
+      <form method="post" action="/article/{{article.id}}/comment" style="width: 100%; display: flex;">
+        <textarea placeholder="댓글을 입력하세요" name="content" style="flex: 1; margin-right: 10px;"></textarea>
+        <input type="hidden" name="csrf_token" value="{{csrf_token}}" />
+        <button class="btn btn-primary" style="width: 100px;">댓글 등록</button>
+      </form>
       {% else %}
         <div class="alert alert-warning custom-alert" role="alert">
           {# {{config.notification.lnsupported[lang].heading}} #}
@@ -286,25 +294,17 @@
       {% endif %}
       </div>
       <ul class="comment-list">
+        {% for comment in comments %}
         <li>
           <div class="comment">
             <div class="comment-header">
-              <span class="comment-author">Jane Smith</span>
-              <span class="comment-time">2023-10-26 15:45:00</span>
+              <span class="comment-author">{{comment_authors[comment.author_id].username}}</span>
+              <span class="comment-time"><time datetime="{{comment.created_at}}"></time></span>
             </div>
-            <p>댓글 내용 1</p>
+            <p>{{comment.content}}</p>
           </div>
         </li>
-        <li>
-          <div class="comment">
-            <div class="comment-header">
-              <span class="comment-author">Bob Johnson</span>
-              <span class="comment-time">2023-10-26 16:20:00</span>
-            </div>
-            <p>댓글 내용 2</p>
-          </div>
-        </li>
-      </ul>
+        {% endfor %}
     </div>
   </div>
   <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11" id="toastContainer"></div>

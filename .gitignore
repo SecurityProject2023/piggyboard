@@ -15,4 +15,5 @@ Cargo.lock
 note
 private/
 .vscode/
+.idea/
 *.sqlite3
