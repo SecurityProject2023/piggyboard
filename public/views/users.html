@@ -65,6 +65,9 @@
       .card {
         margin-bottom: 20px;
       }
+      .card-text {
+        margin-bottom: 0rem;
+      }
       .footer {
         left: 0;
         bottom: 0;
@@ -75,8 +78,10 @@
         border-top: 1px solid white;
       }
       .verified-badge {
-        color: #aaa;
-        font-size: 18px;
+        color: #777;
+      }
+      a {
+        text-decoration: none;
       }
     </style>
   </head>
@@ -108,7 +113,7 @@
             <img src="//secure.gravatar.com/avatar/{{amd5}}?d=retro&amp;f=y" class="card-img-top" alt="프로필 이미지">
             <!-- <img src="https://sun6-22.userapi.com/mBilJ54uGaHkX9UmFI_B9pPGWOJuvIsfyD7YEQ/dI0mzJur3Ag.png" alt=""> -->
             <div class="card-body">
-              <h5 class="card-title">@{{user.username}} <!--<span class="verified-badge" title="인증된 사용자입니다."><i class="fas fa-check-circle"></i></span>--></h5>
+              <h5 class="card-title">@{{user.username}} {% if user.verified %}<span class="verified-badge" title="인증된 사용자입니다."><i class="fas fa-check-circle"></i></span>{% endif %}</h5>
               <p class="card-text">{{user.bio}}</p>
               <p class="card-text"><small class="text-muted"><time id="time" datetime="{{ user.created_at }}"></time>에 만들어진 계정입니다</small></p>
             </div>
@@ -122,7 +127,12 @@
             <div class="card-body">
               {% if articles | length > 0 %}
                 {% for article in articles %}
-                <p class="card-text"><a href="/article/{{article.id}}" target="_blank" rel="noopener noreferrer">{{article.title}}</a></p>
+                {% set article_author = login and article.author_id == login.id %}
+                {% if uacl >= acls[article.id].pread or acls[article.id].pread==4 and article_author %}
+                  <p class="card-text" class="text-truncate"><a href="/article/{{article.id}}" target="_blank" rel="noopener noreferrer" class="d-inline-block text-truncate" style="max-width: 50rem;">{{article.title}}</a></p>
+                {% else %}
+                  <p class="card-text"><i class="text-muted">(권한 없음)</i></p>
+                {% endif %}
                 {% endfor %}
               {% else %}
                 <p class="card-text">사용자가 최근 작성한 글이 없습니다.</p>
@@ -136,7 +146,12 @@
             <div class="card-body">
               {% if comments | length > 0 %}
                 {% for comment in comments %}
-                <p class="card-text">{{comment.content}}</p>
+                {% set comment_author = login and comment.author_id == login.id %}
+                {% if uacl >= acls[comment.article_id].pread_comments or acls[comment.article_id].pread_comments==4 and comment_author %}
+                  <p class="card-text"><a href="/article/{{comment.article_id}}#c-{{comment.id}}" target="_blank" rel="noopener noreferrer">{{comment.content}}</a></p>
+                {% else %}
+                  <p class="card-text"><i class="text-muted">(권한 없음)</i></p>
+                {% endif %}
                 {% endfor %}
               {% else %}
                 <p class="card-text">사용자가 최근 작성한 댓글이 없습니다.</p>

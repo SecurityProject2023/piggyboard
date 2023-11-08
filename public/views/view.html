@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
+  {% set article_author = user and article.author_id == user.id %}
+  {% if user and uacl < 4 and article_author %}{% set uacl = 4 %}{%endif%}
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FishyBoard - 게시물 제목</title>
+  <title>FishyBoard - {% if uacl < acl.pread %}이 게시글에 접근할 권한이 부족합니다{%else%}{{ article.title }}{%endif%}</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7Rxnatzjc3.1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
   <link href="https://fonts.googleapis.com/css?family=Nanum+Gothic" rel="stylesheet">
@@ -12,6 +14,9 @@
     body {
       font-family: 'Nanum Gothic', sans-serif;
       background-color: #f7f7f7;
+    }
+    *, *::before, *::after {
+      box-sizing: border-box;
     }
     .google-header {
       background-color: #ffffff;
@@ -51,7 +56,7 @@
       text-decoration: none;
       font-weight: bold;
     }
-    .container {
+    .fishydino-container {
       background-color: #fff;
       border-radius: 10px;
       padding: 20px;
@@ -95,10 +100,8 @@
       white-space: nowrap;
     }
     .avatar img {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      margin-left: 10px;
+      width: 1rem;
+      height: 1rem;
     }
     .article-info {
       display: flex;
@@ -111,18 +114,16 @@
     .article-info span {
       white-space: nowrap;
     }
-    .sep::before {
+    /* .sep::before {
       content: " | ";
-      /* margin: 0 5px; */
-    }
+      margin: 0 5px;
+    } */
     .head {
       margin-right: 5px;
     }
     .body {
       font-weight: bold;
-    }
-    .sep {
-      margin: 0 5px;
+      background-color: #eee;
     }
     .date time {
       font-weight: bold;
@@ -202,6 +203,99 @@
       width: 100%;
       margin-bottom: 0px;
     }
+    .modal-header {
+      background-color: #dc3545; /* 빨강색 */
+      color: white; /* 텍스트 색상 */
+    }
+    .modal-footer {
+      justify-content: space-between; /* 버튼 간격 조정 */
+    }
+    .verified-badge {
+      color: #777;
+    }
+    .comment-item {
+      width: 100%;
+      margin-bottom: .9rem;
+      word-break: break-all;
+      transition: padding-left .5s;
+    }
+    .comment-item .content {
+      border: 1px solid;
+      border-color: #bbb;
+      font-size: .95rem;
+    }
+    .comment-item .content .info-row {
+      padding: .2rem .5rem;
+      border-bottom: 1px dashed;
+      border-color: #bbb;
+      font-size: .85rem;
+      overflow: hidden;
+      background-color: #eee;
+    }
+    .clearfix {
+      clear: both;
+    }
+    span.zero-at-one-space {
+      display: inline-block;
+      width: .1rem;
+    }
+    .user-icon {
+      color: #777;
+    }
+    .comment-item .avatar {
+      display: inline-block;
+    }
+    .right {
+      float: right;
+      display: flex;
+      flex-wrap: wrap;
+    }
+    .comment-item .content .message {
+      padding: .5rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .comment-item .content .message .text {
+      display: inline;
+    }
+    .comment-item .content .message .btn-more {
+      display: none;
+      background-color: #eee;
+      font-weight: 700;
+      width: 100%;
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      padding: .15rem 0 0;
+      font-size: .85rem;
+    }
+    .comment-item .content .info-row .right .sep::before {
+      margin: 0 .4rem;
+    }
+    .sep:before {
+      content: "|";
+      font-size: 1.1em;
+      font-weight: 300;
+      margin: 0 .5em;
+      line-height: .9em;
+    }
+    @keyframes highlight-target-fade {
+      0% { background-color: #fff4cc }
+      100% { background-color: transparent }
+    }
+    .fadein {
+      animation: highlight-target-fade 2.5s;
+      animation-timing-function: ease-out;
+    }
+    .fadein .content .info-row {
+      animation: highlight-target-fade 2.5s;
+      animation-timing-function: ease-out;
+    }
+    a {
+      color: inherit;
+      text-decoration: none;
+      background-color: transparent;
+    }
   </style>
 </head>
 <body>
@@ -222,12 +316,12 @@
       {% endif %}
     </ul>
   </div>
-  <div class="container">
+  <div class="container fishydino-container">
     <div class="article-head">
       <div class="title-row">
         <div class="title">
           <span class="badge badge-success category-badge">article</span>
-          {{ article.title }}
+          {% if uacl < acl.pread %}<i class="text-muted">(권한 없음)</i>{%else%}{{ article.title }}{%endif%}
         </div>
       </div>
       <div class="member-info article-info-section">
@@ -239,33 +333,66 @@
           </div>
           <span class="zero-at-one-space">&nbsp;</span>
           <span class="user-info">
-            <a href="/u/@{{author.username}}" data-filter="{{ author.username }}#19006105">{{author.username}}</a>
+            <a href="/u/@{{author.username}}" data-filter="{{ author.username }}#19006105">{{author.username}} {% if author.verified %}<span class="verified-badge" title="인증된 사용자입니다."><i class="fas fa-check-circle"></i></span>{% endif %}</a>
           </span>
         </div>
         <div id="article-data-section">
           <span class="head">추천</span>
-          <span class="body" style="color: #2356FF;">{{likes|length}}</span>
+          <span class="body" style="color: #2356FF;">{% if uacl < acl.pread_rate %}해당사항 없음{%else%}{{likes|length}}{%endif%}</span>
           <span class="sep"></span>
           <span class="head">비추천</span>
-          <span class="body" style="color: #BF3131;">{{dislikes|length}}</span>
+          <span class="body" style="color: #BF3131;">{% if uacl < acl.pread_rate %}해당사항 없음{%else%}{{dislikes|length}}{%endif%}</span>
           <span class="sep"></span>
           <span class="head">댓글</span>
-          <span class="body">{{comments|length}}</span>
+          <span class="body">{% if uacl < acl.pread_comments %}숨겨짐{%else%}{{comments|length}}{%endif%}</span>
           <span class="sep"></span>
           <span class="head">조회수</span>
-          <span class="body">0</span>
+          <span class="body">{% if uacl < acl.prv %}숨겨짐{%else%}0{%endif%}</span>
           <span class="sep"></span>
           <span class="head">작성일</span>
-          <span class="body"><time datetime="{{article.created_at}}"></time></span>
+          <span class="body">{% if uacl < acl.pwd %}숨겨짐{%else%}<time datetime="{{article.created_at}}"></time>{%endif%}</span>
+          {% if user %}
+            {% if uacl >= acl.pdelete %}
+            <form id="deleteArticle{{article.id}}Form" method="POST" action="/article/{{article.id}}/delete">
+              <input type="hidden" name="id" value="{{article.id}}">
+              <input type="hidden" name="csrf_token" value="{{csrf_token}}" />
+            </form>
+            <div class="modal fade" id="deleteArticle{{article.id}}Modal" tabindex="-1" aria-labelledby="deleteArticle{{article.id}}ModalLabel" aria-hidden="true">
+              <div class="modal-dialog">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title" id="deleteArticle{{article.id}}ModalLabel">게시글 삭제 확인</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                  </div>
+                  <div class="modal-body">
+                    정말로 이 게시글을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">아니요, 취소합니다</button>
+                    <button type="submit" form="deleteArticle{{article.id}}Form" class="btn btn-danger">네, 삭제합니다</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <span class="sep"></span>
+            <span class="head"></span>
+            <span class="body"><a href="#deleteArticle{{article.id}}" data-bs-toggle="modal" data-bs-target="#deleteArticle{{article.id}}Modal">삭제</a></span>
+            {% endif %}
+            {% if uacl >= acl.pedit %}
+            <span class="sep"></span>
+            <span class="head"></span>
+            <span class="body"><a href="/article/{{article.id}}/edit">수정</a></span>
+            {% endif %}
+          {% endif %}
         </div>
       </div>
     </div>
     <hr>
     <p class="article-content">
-      {{ article.content }}
+      {% if uacl < acl.pread %}(권한 없음){%else%}{{ article.content }}{%endif%}
       <input type="hidden" name="csrf_token" value="{{csrf_token}}" />
     </p>
-    {% if user %}
+    {% if user and uacl >= acl.prate %}
       <div class="like-dislike">
         <button id="likeButton" class="btn btn-success">추천! <i class="fas fa-thumbs-up"></i></button>
         <button id="dislikeButton" class="btn btn-danger">비추! <i class="fas fa-thumbs-down"></i></button>
@@ -278,9 +405,9 @@
       </h2>
       <hr>
       <div class="comment-input">
-      {% if user %}
+      {% if user and uacl >= acl.pwrite_comments %}
       <form method="post" action="/article/{{article.id}}/comment" style="width: 100%; display: flex;">
-        <textarea placeholder="댓글을 입력하세요" name="content" style="flex: 1; margin-right: 10px;"></textarea>
+        <textarea placeholder="댓글을 입력하세요" name="content" style="flex: 1; margin-right: 10px;" required></textarea>
         <input type="hidden" name="csrf_token" value="{{csrf_token}}" />
         <button class="btn btn-primary" style="width: 100px;">댓글 등록</button>
       </form>
@@ -288,22 +415,95 @@
         <div class="alert alert-warning custom-alert" role="alert">
           {# {{config.notification.lnsupported[lang].heading}} #}
           <h4 class="alert-heading">권한 부족</h4>
-          본 게시물에 댓글을 작성하실 권한이 없습니다. 로그인 하신 후 댓글을 다실 수 있습니다. <a href="/login">PiggyBoard 로그인</a>
+          본 게시물에 댓글을 작성하실 권한이 없습니다. {% if not user %}로그인 하신 후 댓글을 다실 수 있습니다. <a href="/login">PiggyBoard 로그인</a>{%endif%}
           {# {{config.notification.lnsupported[lang].content}} {{ config.langname[config.langs[0]] }} #}
         </div>
       {% endif %}
       </div>
       <ul class="comment-list">
         {% for comment in comments %}
+        {% set comment_author = user and comment.author_id == user.id %}
+        {% if uacl >= acl.pread_comments or acl.pread_comments==4 and comment_author %}
         <li>
-          <div class="comment">
-            <div class="comment-header">
-              <span class="comment-author">{{comment_authors[comment.author_id].username}}</span>
-              <span class="comment-time"><time datetime="{{comment.created_at}}"></time></span>
+          <div class="comment-item" id="c-{{comment.id}}">
+            <div class="content">
+              <div class="info-row clearfix">
+                <span class="user-info">
+                  <a href="/u/@{{comment_authors[comment.author_id].username}}">{{comment_authors[comment.author_id].username}}</a>
+                  {% if comment_authors[comment.author_id].verified %}<span class="verified-badge" title="인증된 사용자입니다."><i class="fas fa-check-circle"></i></span>{% endif %}</span>
+                </span>
+                <div class="right">
+                  <time datetime="2023-11-07T04:31:12.000Z" data-format="Y-m-d H:i:s">2023-11-07 13:31:12</time>
+                  {% if user %}
+                    {% if uacl >= acl.pread_comments or acl.pread_comments==4 and comment_author %}
+                    <span class="sep"></span>
+                      <form id="deleteComment{{comment.id}}Form" method="POST" action="/article/{{article.id}}/c/{{comment.id}}/delete">
+                        <input type="hidden" name="id" value="{{comment.id}}">
+                        <input type="hidden" name="csrf_token" value="{{csrf_token}}" />
+                      </form>
+                      <div class="modal fade" id="deleteComment{{comment.id}}Modal" tabindex="-1" aria-labelledby="deleteComment{{comment.id}}ModalLabel" aria-hidden="true">
+                        <div class="modal-dialog">
+                          <div class="modal-content">
+                            <div class="modal-header">
+                              <h5 class="modal-title" id="deleteComment{{comment.id}}ModalLabel">게시글 삭제 확인</h5>
+                              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                              정말로 이 댓글을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
+                            </div>
+                            <div class="modal-footer">
+                              <button type="button" class="btn btn-light" data-bs-dismiss="modal">아니요, 취소합니다</button>
+                              <button type="submit" form="deleteComment{{comment.id}}Form" class="btn btn-danger">네, 삭제합니다</button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <a href="#deleteComment{{comment.id}}" data-bs-toggle="modal" data-bs-target="#deleteComment{{comment.id}}Modal"><i class="fa-solid fa-trash"></i> 삭제</a>
+                    {% endif %}{% if user and uacl >= acl.pedit_comments or acl.pedit_comments==4 and comment_author %}
+                    <span class="sep"></span>
+                    <a href="#__ec{{comment.id}}" data-bs-toggle="collapse" data-bs-target="#editComment{{comment.id}}Form"><i class="fa-solid fa-pen-to-square"></i> 수정</a>
+                    {% endif %}
+                  {% endif %}
+                </div>
+              </div>
+              <div class="message">
+                <div class="text"><pre class="">{{comment.content}}</pre></div>
+              </div>
             </div>
-            <p>{{comment.content}}</p>
-          </div>
+          </div>{% if user and uacl >= acl.pedit_comments or acl.pedit_comments==4 and comment_author %}
+          <form class="container py-5 collapse" style="padding-top: 0.2rem !important;" id="editComment{{comment.id}}Form" action="/article/{{article.id}}/c/{{comment.id}}/edit" method="post">
+            <div class="card">
+              <div class="card-header d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                  <input class="form-control mx-2 text-muted" type="text" disabled="disabled" value="{{comment_authors[comment.author_id].username}}">
+                </div>
+              </div>
+              <div class="card-body">
+                <textarea class="form-control mb-3" name="content" maxlength="8000" required="required" tabindex="108" placeholder="댓글을 입력하세요."></textarea>
+                <input type="hidden" name="csrf_token" value="{{csrf_token}}" />
+                <button class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#editComment{{comment.id}}Modal">작성</button>
+              </div>
+            </div>
+          </form>
+          <div class="modal fade" id="editComment{{comment.id}}Modal" tabindex="-1" aria-labelledby="editComment{{comment.id}}ModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="editComment{{comment.id}}ModalLabel">게시글 수정 확인</h5>
+                  <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                  정말로 수정하시겠습니까? 이 작업은 되돌릴 수 없습니다.
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-light" data-bs-dismiss="modal">아니요, 취소합니다</button>
+                  <button type="submit" form="editComment{{comment.id}}Form" class="btn btn-danger">네, 수정할래요</button>
+                </div>
+              </div>
+            </div>
+          </div>{%endif%}
         </li>
+        {% endif %}
         {% endfor %}
     </div>
   </div>
@@ -311,10 +511,9 @@
   <script src="/t.js"></script>
   {% if user %}
   <script>
-    document.getElementById("likeButton").addEventListener("click",function(){var a=new XMLHttpRequest;a.open("POST","/api/v1/rate/{{article.id}}",!0);a.setRequestHeader("Content-Type","application/json;charset=UTF-8");a.setRequestHeader("Csrf-Token","{{csrf_token}}");a.onreadystatechange=function(){if(4==a.readyState&&200==a.status){var b=JSON.parse(a.responseText);b.error&&g(b.message)}};a.send(JSON.stringify({value:1,user_id:Number("{{user.id}}"),csrf_token:"{{csrf_token}}"}))});
-    document.getElementById("dislikeButton").addEventListener("click",function(){var a=new XMLHttpRequest;a.open("POST","/api/v1/rate/{{article.id}}",!0);a.setRequestHeader("Content-Type","application/json;charset=UTF-8");a.setRequestHeader("Csrf-Token","{{csrf_token}}");a.onreadystatechange=function(){if(4==a.readyState&&200==a.status){var b=JSON.parse(a.responseText);b.error&&g(b.message)}};a.send(JSON.stringify({value:-1,user_id:Number("{{user.id}}"),csrf_token:"{{csrf_token}}"}))});
-    function g(a){var b=void 0===b?{}:b;var h=document.getElementById("toastContainer"),c=document.createElement("div");c.classList="toast";c.setAttribute("role","alert");c.setAttribute("aria-live","assertive");c.setAttribute("aria-atomic","true");c.setAttribute("data-bs-autohide","false");var e=document.createElement("div");e.classList="toast-header";var d=document.createElement("strong");d.classList="me-auto";var f;d.textContent=null!=(f=b.n)?f:"Fishydino";f=document.createElement("small");var k;f.textContent=null!=(k=b.t)?k:"just now";b=document.createElement("button");b.setAttribute("type","button");b.classList="btn-close";b.setAttribute("data-bs-dismiss","toast");b.setAttribute("aria-label","Close");e.appendChild(d);e.appendChild(f);e.appendChild(b);d=document.createElement("div");d.classList="toast-body";d.textContent=a;c.appendChild(e);c.appendChild(d);h.appendChild(c);(new bootstrap.Toast(c,{delay:2E3,autohide:!0})).show();c.addEventListener("hidden.bs.toast",function(){h.removeChild(c)})};
+    document.getElementById("likeButton").addEventListener("click",function(){var a=new XMLHttpRequest;a.open("POST","/api/v1/rate/{{article.id}}",!0);a.setRequestHeader("Content-Type","application/json;charset=UTF-8");a.setRequestHeader("Csrf-Token","{{csrf_token}}");a.onreadystatechange=function(){if(4==a.readyState&&200==a.status){var b=JSON.parse(a.responseText);b.error&&g(b.message)}};a.send(JSON.stringify({value:1,user_id:Number("{{user.id}}"),csrf_token:"{{csrf_token}}"}))});document.getElementById("dislikeButton").addEventListener("click",function(){var a=new XMLHttpRequest;a.open("POST","/api/v1/rate/{{article.id}}",!0);a.setRequestHeader("Content-Type","application/json;charset=UTF-8");a.setRequestHeader("Csrf-Token","{{csrf_token}}");a.onreadystatechange=function(){if(4==a.readyState&&200==a.status){var b=JSON.parse(a.responseText);b.error&&g(b.message)}};a.send(JSON.stringify({value:-1,user_id:Number("{{user.id}}"),csrf_token:"{{csrf_token}}"}))});function g(a){var b=void 0===b?{}:b;var h=document.getElementById("toastContainer"),c=document.createElement("div");c.classList="toast";c.setAttribute("role","alert");c.setAttribute("aria-live","assertive");c.setAttribute("aria-atomic","true");c.setAttribute("data-bs-autohide","false");var e=document.createElement("div");e.classList="toast-header";var d=document.createElement("strong");d.classList="me-auto";var f;d.textContent=null!=(f=b.n)?f:"Fishydino";f=document.createElement("small");var k;f.textContent=null!=(k=b.t)?k:"just now";b=document.createElement("button");b.setAttribute("type","button");b.classList="btn-close";b.setAttribute("data-bs-dismiss","toast");b.setAttribute("aria-label","Close");e.appendChild(d);e.appendChild(f);e.appendChild(b);d=document.createElement("div");d.classList="toast-body";d.textContent=a;c.appendChild(e);c.appendChild(d);h.appendChild(c);(new bootstrap.Toast(c,{delay:2E3,autohide:!0})).show();c.addEventListener("hidden.bs.toast",function(){h.removeChild(c)})};
   </script>
   {% endif %}
+  <script>window.onload=function(){var a=window.location.hash;a.startsWith("#c-")&&(a=document.getElementById(a.substring(1)))&&a.classList.add("fadein")};</script>
 </body>
 </html>

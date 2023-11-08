@@ -30,20 +30,21 @@ fn handle_error<B>(mut res: ServiceResponse<B>, error_file: &str) -> ActixResult
 fn handle_unauthorized<B>(res: ServiceResponse<B>) -> ActixResult<ErrorHandlerResponse<B>> { handle_error(res, "./public/views/401.html") }
 fn handle_forbidden<B>(res: ServiceResponse<B>) -> ActixResult<ErrorHandlerResponse<B>> { handle_error(res, "./public/views/403.html") }
 fn handle_notfound<B>(res: ServiceResponse<B>) -> ActixResult<ErrorHandlerResponse<B>> { handle_error(res, "./public/views/404.html") }
+fn handle_iamateapot<B>(res: ServiceResponse<B>) -> ActixResult<ErrorHandlerResponse<B>> { handle_error(res, "./public/views/418.html") }
 fn handle_internal_server_error<B>(res: ServiceResponse<B>) -> ActixResult<ErrorHandlerResponse<B>> { handle_error(res, "./public/views/500.html") }
 
 #[actix_web::main]
 async fn main() -> IOResult<()> {
   dotenv().ok();
-  env_logger::init_from_env(Env::default().default_filter_or("info"));
-  let tera = Tera::new("public/views/**/*.html").unwrap();
+  env_logger::init_from_env(Env::default().default_filter_or("debug"));
+  let tera: Tera = Tera::new("public/views/**/*.html").unwrap();
   let secret_key: Key = Key::generate();
   let manager: ConnectionManager::<SqliteConnection>  = ConnectionManager::<SqliteConnection>::new("./piggyboard.sqlite3");
   let pool: Pool<ConnectionManager<SqliteConnection>> = Pool::builder()
     .build(manager)
     .expect("database URL should be valid path to SQLite DB file");
   HttpServer::new(move || {
-    let csrf = CsrfMiddleware::<StdRng>::new()
+    let csrf: CsrfMiddleware<StdRng> = CsrfMiddleware::<StdRng>::new()
       .set_cookie(Method::GET, "/login")
       .set_cookie(Method::GET, "/write")
       .set_cookie(Method::GET, "/article/{id}")
@@ -61,6 +62,7 @@ async fn main() -> IOResult<()> {
         .handler(StatusCode::UNAUTHORIZED, handle_unauthorized)
         .handler(StatusCode::FORBIDDEN, handle_forbidden)
         .handler(StatusCode::NOT_FOUND, handle_notfound)
+        .handler(StatusCode::IM_A_TEAPOT, handle_iamateapot)
         .handler(StatusCode::INTERNAL_SERVER_ERROR, handle_internal_server_error)
       )
       .wrap(IdentityMiddleware::default())

@@ -1,5 +1,5 @@
 use diesel::prelude::*;
-use crate::{schema::users, CreateUserData, error::{PiggyError, PiggyErrorKind}, PiggyResult, cryp::{password_hash, verify_password}};
+use crate::{schema::users, CreateUserData, error::{PiggyError, PiggyErrorKind}, PiggyResult, cryp::{password_hash, verify_password}, utils::Acl};
 use chrono::NaiveDateTime;
 use serde::Serialize;
 use regex::Regex;
@@ -33,6 +33,8 @@ pub struct User {
   pub bio: String,
   #[serde(skip)]
   pub password: String,
+  pub verified: bool,
+  pub acl: String,
   pub created_at: NaiveDateTime,
 }
 
@@ -51,6 +53,8 @@ pub struct NewUser {
   pub lang: String,
   pub bio: String,
   pub password: String,
+  pub verified: bool,
+  pub acl: String,
   pub created_at: NaiveDateTime,
 }
 
@@ -71,6 +75,8 @@ impl User {
         lang: String::from("ko"),
         bio: String::from(DEFAULT_BIO),
         password,
+        verified: false,
+        acl: String::from("user"),
         created_at: chrono::Utc::now().naive_utc()
       })
   }
@@ -95,8 +101,14 @@ impl User {
       lang: pload.lang.map_or("ko".to_string(), |v: String| v),
       bio: pload.bio.map_or(DEFAULT_BIO.to_string(), |v: String| v),
       password,
+      verified: false,
+      acl: "user".to_string(),
       created_at: chrono::Utc::now().naive_utc()
     })
+  }
+
+  pub fn all_user_length(conn: &mut SqliteConnection) -> PiggyResult<i64> {
+    Ok(users::table.count().get_result::<i64>(conn)?)
   }
 
   pub fn email_in_use(conn: &mut SqliteConnection, email: impl ToString) -> bool {
@@ -199,17 +211,21 @@ impl User {
     Ok(users::table.filter(users::id.eq(user.id)).first(conn)?)
   }
 
-  pub fn add(conn: &mut SqliteConnection, user: NewUser) -> PiggyResult<User> {
+  pub fn add(conn: &mut SqliteConnection, mut user: NewUser) -> PiggyResult<User> {
     if User::email_in_use(conn, &user.email) { return Err(PiggyError::from_kind(PiggyErrorKind::EmailAlreadyInUse)); }
     if User::username_in_use(conn, &user.username) { return Err(PiggyError::from_kind(PiggyErrorKind::UsernameAlreadyInUse)); }
     if let Some(phone) = &user.phone {
       if User::phone_in_use(conn, phone) { return Err(PiggyError::from_kind(PiggyErrorKind::PhoneAlreadyInUse)); }
     }
-    diesel::insert_into(users::table)
-      .values(&user)
-      .execute(conn)?;
+    if User::all_user_length(conn)? < 1 {
+      user.verified = true;
+      user.acl = "owner".to_string();
+    }
+    diesel::insert_into(users::table).values(&user).execute(conn)?;
     Ok(users::table.order(users::id.desc()).first(conn)?)
   }
+
+  pub fn acl(&self) -> Acl { Acl::from(self.acl.as_str()) }
 
   // pub fn block(&self, conn: &mut SqliteConnection, target: &User) -> PiggyResult<Block> { Block::add(conn, self, target) }
 

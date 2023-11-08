@@ -19,14 +19,20 @@
       border-color: #007bff;
     }
     .footer {
-      position: fixed;
       left: 0;
       bottom: 0;
       width: 100%;
       text-align: center;
       padding: 20px;
-      background-color: white;
       border-top: 1px solid white;
+    }
+    .custom-alert {
+      border-radius: 0.25rem;
+      padding: 1rem;
+    }
+    .alert {
+      width: 100%;
+      margin-bottom: 1rem;
     }
   </style>
 </head>
@@ -37,13 +43,19 @@
         <h2 class="card-title mb-4">게시글 등록</h2>
         <p></p>
         <form method="post" action="/write">
+          {% if error %}
+          <div class="alert alert-danger custom-alert" role="alert">
+            <h4 class="alert-heading">잘못된 작업</h4>
+            {{error}}
+          </div>
+          {% endif %}
           <div class="mb-3">
             <label for="title" class="form-label">제목</label>
-            <input type="text" class="form-control" id="title" name="title" placeholder="제목을 입력하세요">
+            <input type="text" class="form-control" id="title" name="title" placeholder="제목을 입력하세요" required>
           </div>
           <div class="mb-3">
             <label for="content" class="form-label">내용</label>
-            <textarea class="form-control" id="content" name="content" rows="5" placeholder="내용을 입력하세요. 운영약관에 위반되는 모든 게시글은 무통보 삭제됩니다."></textarea>
+            <textarea class="form-control" id="content" name="content" rows="5" placeholder="내용을 입력하세요. 운영약관에 위반되는 모든 게시글은 무통보 삭제됩니다." required></textarea>
           </div>
           <input type="hidden" name="csrf_token" value="{{csrf_token}}" />
           <button type="submit" class="btn btn-primary">등록</button>

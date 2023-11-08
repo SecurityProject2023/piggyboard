@@ -12,8 +12,8 @@ use super::User;
 #[diesel(check_for_backend(diesel::sqlite::Sqlite))]
 pub struct Comment {
   pub id: i32,
-  pub article_id: i32,
   pub author_id: i32,
+  pub article_id: i32,
   pub content: String,
   pub created_at: NaiveDateTime,
 }
@@ -21,8 +21,8 @@ pub struct Comment {
 #[derive(Insertable, Debug)]
 #[diesel(table_name = comments)]
 pub struct NewComment {
-  pub article_id: i32,
   pub author_id: i32,
+  pub article_id: i32,
   pub content: String,
   pub created_at: NaiveDateTime,
 }
@@ -30,8 +30,8 @@ pub struct NewComment {
 impl Comment {
   pub fn new(article_id: i32, author_id: i32, content: String) -> NewComment {
     NewComment {
-      article_id,
       author_id,
+      article_id,
       content,
       created_at: Utc::now().naive_utc(),
     }
@@ -69,7 +69,10 @@ impl Comment {
     let mut authors: HashMap<i32, User> = HashMap::new();
     for comment in Comment::get_all(conn, article_id)? {
       if !authors.contains_key(&comment.author_id) {
-        authors.insert(comment.author_id, comment.author(conn).unwrap());
+        println!("{}", comment.author_id);
+        let author = comment.author(conn);
+        if let None = author { return Err(PiggyError::from_kind(PiggyErrorKind::UserNotFound)); }
+        authors.insert(comment.author_id, author.unwrap());
       }
     }
     Ok(authors)
@@ -80,6 +83,13 @@ impl Comment {
       Ok(comments) => Ok(comments),
       Err(_) => Err(PiggyError::from_kind(PiggyErrorKind::CommentNotFound)),
     }
+  }
+
+  pub fn edit(&self, conn: &mut SqliteConnection, content: String) -> PiggyResult<Comment> {
+    diesel::update(comments::table.find(self.id))
+      .set(comments::content.eq(content))
+      .execute(conn)?;
+    Ok(comments::table.find(self.id).first(conn)?)
   }
  
   pub fn delete(&self, conn: &mut SqliteConnection) -> PiggyResult<()> {

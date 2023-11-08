@@ -5,7 +5,7 @@ use crate::{schema::articles, PiggyResult, error::{PiggyError, PiggyErrorKind}};
 use chrono::{NaiveDateTime, Utc};
 use serde::Serialize;
 
-use super::{User, Comment};
+use super::{User, Comment, ArticleAcl};
 
 #[derive(Queryable, Debug, PartialEq, Serialize)]
 #[diesel(table_name = article)]
@@ -41,7 +41,9 @@ impl Article {
     diesel::insert_into(articles::table)
       .values(&post)
       .execute(conn)?;
-    Ok(articles::table.order(articles::id.desc()).first(conn)?)
+    let arti: Article = articles::table.order(articles::id.desc()).first(conn)?;
+    ArticleAcl::add(conn, ArticleAcl::new(arti.id))?;
+    Ok(arti)
   }
 
   pub fn by_id(conn: &mut SqliteConnection, id: i32) -> PiggyResult<Article> {
@@ -82,7 +84,11 @@ impl Article {
   }
   
   pub fn delete(&self, conn: &mut SqliteConnection) -> PiggyResult<()> {
+    let comments = Comment::get_all(conn, self.id)?;
+    for comment in comments { comment.delete(conn)?; }
     diesel::delete(articles::table.find(self.id)).execute(conn)?;
     Ok(())
   }
+
+  pub fn acl(&self, conn: &mut SqliteConnection) -> PiggyResult<ArticleAcl> { ArticleAcl::by_article_id(conn, self.id) }
 }

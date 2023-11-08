@@ -3,6 +3,7 @@ pub mod res;
 pub mod models;
 pub mod cryp;
 pub mod schema;
+pub mod utils;
 
 use error::{PiggyError, PiggyErrorKind};
 use models::User;

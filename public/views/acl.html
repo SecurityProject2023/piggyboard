@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>문서 ACL 편집 페이지</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7Rxnatzjc3.1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+  <link href="https://fonts.googleapis.com/css?family=Nanum+Gothic" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.0/css/all.min.css">
+  <style>
+    body {
+      background-color: #f8f9fa;
+      font-family: 'Nanum Gothic', sans-serif;
+    }
+    .container {
+      max-width: 800px;
+      margin: auto;
+      padding: 40px 60px;
+      background-color: #ffffff;
+      border-radius: 15px;
+      box-shadow: 0 0 20px 0 rgba(0, 0, 0, 0.1);
+    }
+    h1 {
+      color: #343a40;
+      font-size: 2.5rem;
+      margin-bottom: 30px;
+      text-align: center;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+    h2 {
+      color: #343a40;
+      font-size: 1.5rem;
+      margin-top: 40px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    p, ul {
+      color: #868e96;
+      line-height: 1.6;
+      margin-bottom: 40px;
+    }
+    .form-select {
+      width: 100%;
+      height: 45px;
+      padding: 5px 20px;
+      border-radius: 5px;
+      border: 1px solid #ced4da;
+      font-size: 1rem;
+      color: #495057;
+      margin-bottom: 20px;
+    }
+    .btn {
+      width: 100%;
+      height: 50px;
+      background-color: #343a40;
+      color: #ffffff;
+      font-size: 1.1rem;
+      border-radius: 5px;
+      transition: all 0.3s;
+    }
+    .btn:hover {
+      background-color: #212529;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1 class="mt-4">ACL 편집</h1>
+    <form action="/article/{{article.id}}/change_acl" method="POST">
+      <h2 class="mt-5">읽기 ACL</h2>
+      <select name="pread" class="form-select">
+        {% for acl in acls %}<option value="{{acl.0}}"{% if ac.pread == acl.0 %} selected{% endif %}>{{acl.1}}</option>{% endfor %}
+      </select>
+      <h2 class="mt-5">편집 ACL</h2>
+      <select name="pedit" class="form-select">
+        {% for acl in acls %}<option value="{{acl.0}}"{% if ac.pedit == acl.0 %} selected{% endif %}>{{acl.1}}</option>{% endfor %}
+      </select>
+      <h2 class="mt-5">삭제 ACL</h2>
+      <select name="pdelete" class="form-select">
+        {% for acl in acls %}<option value="{{acl.0}}"{% if ac.pdelete == acl.0 %} selected{% endif %}>{{acl.1}}</option>{% endfor %}
+      </select>
+      <h2 class="mt-5">Rate ACL</h2>
+      <select name="prate" class="form-select">
+        {% for acl in acls %}<option value="{{acl.0}}"{% if ac.prate == acl.0 %} selected{% endif %}>{{acl.1}}</option>{% endfor %}
+      </select>
+      <h2 class="mt-5">Read Rate ACL</h2>
+      <select name="pread_rate" class="form-select">
+        {% for acl in acls %}<option value="{{acl.0}}"{% if ac.pread_rate == acl.0 %} selected{% endif %}>{{acl.1}}</option>{% endfor %}
+      </select>
+      <h2 class="mt-5">조회수 조회 ACL</h2>
+      <select name="prv" class="form-select">
+        {% for acl in acls %}<option value="{{acl.0}}"{% if ac.prv == acl.0 %} selected{% endif %}>{{acl.1}}</option>{% endfor %}
+      </select>
+      <h2 class="mt-5">작성일 조회 ACL</h2>
+      <select name="pwd" class="form-select">
+        {% for acl in acls %}<option value="{{acl.0}}"{% if ac.pwd == acl.0 %} selected{% endif %}>{{acl.1}}</option>{% endfor %}
+      </select>
+      <h2 class="mt-5">수정일 조회 ACL</h2>
+      <select name="ped" class="form-select">
+        {% for acl in acls %}<option value="{{acl.0}}"{% if ac.ped == acl.0 %} selected{% endif %}>{{acl.1}}</option>{% endfor %}
+      </select>
+      <h2 class="mt-5">문서 역사 조회 ACL</h2>
+      <select name="pview_history" class="form-select">
+        {% for acl in acls %}<option value="{{acl.0}}"{% if ac.pview_history == acl.0 %} selected{% endif %}>{{acl.1}}</option>{% endfor %}
+      </select>
+      <h2 class="mt-5">댓글 읽기 ACL</h2>
+      <select name="pread_comments" class="form-select">
+        {% for acl in acls %}<option value="{{acl.0}}"{% if ac.pread_comments == acl.0 %} selected{% endif %}>{{acl.1}}</option>{% endfor %}
+      </select>
+      <h2 class="mt-5">댓글 등록 ACL</h2>
+      <select name="pwrite_comments" class="form-select">
+        {% for acl in acls %}<option value="{{acl.0}}"{% if ac.pwrite_comments == acl.0 %} selected{% endif %}>{{acl.1}}</option>{% endfor %}
+      </select>
+      <h2 class="mt-5">댓글 수정 ACL</h2>
+      <select name="pedit_comments" class="form-select">
+        {% for acl in acls %}<option value="{{acl.0}}"{% if ac.pedit_comments == acl.0 %} selected{% endif %}>{{acl.1}}</option>{% endfor %}
+      </select>
+      <h2 class="mt-5">댓글 삭제 ACL</h2>
+      <select name="pdelete_comments" class="form-select">
+        {% for acl in acls %}<option value="{{acl.0}}"{% if ac.pdelete_comments == acl.0 %} selected{% endif %}>{{acl.1}}</option>{% endfor %}
+      </select>
+      <h2 class="mt-5">ACL 설명</h2>
+      <p>ACL(Access Control List)은 사용자 또는 그룹에 대한 권한을 관리하는 체계입니다. 이 페이지에서는 읽기 권한, 편집 권한, 삭제 권한, 댓글 등록 권한, 댓글 삭제 권한을 설정할 수 있습니다. 해당 권한을 체크하면 사용자는 해당 작업을 수행할 수 있습니다.</p>
+      <ul>
+        <li>owner: 소유자</li>
+        <li>admin: 관리자</li>
+        <li>author: 댓글의 경우, 댓글 작성자. 게시글의 경우 게시글 작성자</li>
+        <li>email: 이메일 인증 사용자 (현재 이메일 인증 사용 불가능)</li>
+        <li>user: 로그인한 사용자</li>
+        <li>all: 로그인 여부와 상관없이 모든 사용자</li>
+        <li>ban: 차단된 사용자</li>
+      </ul>
+      <button type="submit" class="btn btn-primary mt-5">저장</button>
+    </form>
+  </div>
+</body>
+</html>

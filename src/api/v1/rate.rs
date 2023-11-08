@@ -1,7 +1,7 @@
 use actix_identity::Identity;
 use actix_web::{web::{Data, self}, HttpResponse, post, Responder};
 use diesel::{r2d2::{PooledConnection, self}, SqliteConnection};
-use piggyboard::{DbPool, models::{User, Article, Like, Dislike}};
+use piggyboard::{DbPool, models::{User, Article, Like, Dislike, ArticleAcl}, utils::Acl};
 use serde_json::json;
 use serde::Deserialize;
 
@@ -17,6 +17,8 @@ async fn prate_article(pool: Data<DbPool>, user: Option<Identity>, ath: web::Pat
   let arti: Article = arti.unwrap();
   let payload = payload.into_inner();
   if user.id != payload.user_id { return HttpResponse::Unauthorized().finish(); }
+  let acl = ArticleAcl::by_article_id(&mut conn, arti.id).unwrap().prate as i32;
+  if ((acl == (Acl::Author as i32) && user.id != arti.author_id)) && ((user.acl() as i32) < acl) { return HttpResponse::Unauthorized().finish(); }
   if payload.value == 1 {
     if let Ok(true) = Like::liked(&mut conn, user.id, arti.id) { return HttpResponse::Ok().json(json!({ "error": true, "message": "You Already Liked This" })) }
     Like::add(&mut conn, Like::new(payload.user_id, arti.id)).unwrap();
