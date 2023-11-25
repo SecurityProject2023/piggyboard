@@ -1,5 +1,6 @@
+use actix_cors::Cors;
 use actix_web::{
-  http::{header, StatusCode, Method}, cookie::Key, App, HttpServer,
+  http::{header, StatusCode, Method, self}, cookie::Key, App, HttpServer,
   dev::ServiceResponse, middleware::{Logger, ErrorHandlerResponse, ErrorHandlers},
   web::{self, Data}, Result as ActixResult, HttpRequest, HttpResponse
 };
@@ -54,8 +55,15 @@ async fn main() -> IOResult<()> {
       .set_cookie(Method::GET, "/signup/v2/createpassword")
       .set_cookie(Method::GET, "/v3/signin/identifier")
       .set_cookie(Method::GET, "/v3/signin/challenge/pwd");
+    let cors = Cors::default()
+      .allowed_origin("http://pb.fishydino.tech")
+      .allowed_methods(vec!["GET", "POST"])
+      .allowed_headers(vec![http::header::AUTHORIZATION, http::header::ACCEPT])
+      .allowed_header(http::header::CONTENT_TYPE)
+      .max_age(3600);
     App::new()
       .wrap(csrf)
+      .wrap(cors)
       .wrap(Logger::default())
       .wrap(Logger::new("%a %t \"%r\" %s %b \"%{Referer}i\" \"%{User-Agent}i\" %T"))
       .wrap(ErrorHandlers::new()
